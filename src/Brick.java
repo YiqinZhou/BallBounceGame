@@ -2,7 +2,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 
 public class Brick {
-	
+  
    public ImageView[] bricks;
    Image Brick3Image = new Image(getClass().getClassLoader().getResourceAsStream("brick3.gif"));
    Image Brick2Image = new Image(getClass().getClassLoader().getResourceAsStream("brick4.gif"));
@@ -15,6 +15,7 @@ public class Brick {
 	   for (int i=0;i<brickConfig.length;i++) {
 		   if (brickConfig[i]==1) {
 			   bricks[i]=new ImageView(Brick1Image);
+			  
 
 			   
 		   }

@@ -31,7 +31,7 @@ public class Level {
     public Text scoreText;
     public static Timeline animation;
     public ImageView[] bricks;
-    public int[] brickConfig;
+    public int[] brickConfig= {1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,3,3};
 
     // some things we need to remember during our game
     private Scene myScene;
@@ -41,7 +41,11 @@ public class Level {
     private Random dice=new Random();
     
     //pass back to the main
-    public boolean pass;
+    public int pass=-1;
+    
+    Image Brick3Image = new Image(getClass().getClassLoader().getResourceAsStream("brick3.gif"));
+    Image Brick2Image = new Image(getClass().getClassLoader().getResourceAsStream("brick4.gif"));
+    Image Brick1Image = new Image(getClass().getClassLoader().getResourceAsStream("brick10.gif"));
     
    
 	
@@ -110,7 +114,7 @@ public class Level {
         	    life=life-1;
         	    if (life==0) {
         	    	    animation.stop();
-        	    	    pass=false;
+        	    	    pass=0;
         	    	   
         	    }
          	scoreText.setText("Score: "+score+"   Life: "+life);
@@ -132,11 +136,17 @@ public class Level {
 
         int count=0;
         
+        
+        
         for (int i=0;i<bricks.length;i++) {
         	    if (bricks[i].isVisible()==false) {
         	    	    count=count+1;
         	    }
             if (myBouncer1.getBoundsInParent().intersects(bricks[i].getBoundsInParent()) && bricks[i].isVisible()==true) {
+            	    //hit by once and cleared, 10 points
+             	if (bricks[i].getImage()==Brick1Image) {
+             		
+             	}
        	        bricks[i].setVisible(false);
        	        score=score+10;
        	        scoreText.setText("Score: "+score+"   Life: "+life);
@@ -145,9 +155,9 @@ public class Level {
          }
         
          //all bricks clear
-         if (count==5) {
+         if (count==bricks.length) {
         	     animation.stop();
-        	     pass=true;
+        	     pass=1;
         	     
          }
       

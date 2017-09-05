@@ -26,20 +26,23 @@ public class ExampleBounce extends Application {
   
     public Timeline animation;  
     public Level level1;
-    public TransitionScenes transition=new TransitionScenes();
+    public static TransitionScenes transition=new TransitionScenes();
     public int[] brickConfig= {1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,3,3};
     public ImageView[] bricks;
+ 
+    static Stage stage;
     
     @Override
-    public void start (Stage s) {
+    public void start (Stage primaryStage) {
         animation = new Timeline();
-
+        
+        stage=primaryStage;
     	    level1=new Level(animation);
         // attach scene to the stage and display it
-        Scene scene = level1.setupGame(SIZE, SIZE, BACKGROUND);
-        s.setScene(scene);
-        s.setTitle(TITLE);
-        s.show();
+        Scene scene1 = level1.setupGame(SIZE, SIZE, BACKGROUND);
+        stage.setScene(scene1);
+        stage.setTitle(TITLE);
+        stage.show();
         // attach "game loop" to timeline to play it
         
         KeyFrame frame = new KeyFrame(Duration.millis(MILLISECOND_DELAY),
@@ -48,19 +51,30 @@ public class ExampleBounce extends Application {
         animation.getKeyFrames().add(frame);
         animation.play();
         
-        System.out.println("stop");
+       
+       
         
-        //pass level1
-        if (level1.pass==true) {
-        	    transition.winScene();
-        }
-        
-        if (level1.pass==false) {
-        	    transition.loseScene();
-        }
+       
+
         
  
     }
+   
+    
+    public static void changeScene(String sceneName) {
+    	    if (sceneName=="FAIL") {
+    	    	    Group root=new Group();
+    	      	Scene failScene=new Scene(root,SIZE,SIZE,BACKGROUND);
+        	    stage.setScene(failScene);
+    	    }
+    	    
+    	  
+    	    
+    	    
+    	  
+    }
+    
+    
 	
 	 // Create the game's "scene": what shapes will be in the game and their starting properties
     
@@ -68,7 +82,9 @@ public class ExampleBounce extends Application {
 	public static void main (String[] args) {
         
         launch(args);
-    }
+       
+
+	}
 
     
   
