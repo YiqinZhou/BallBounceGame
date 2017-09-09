@@ -13,6 +13,8 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+
+import java.util.ArrayList;
 import java.util.Random;
 
 public class Level {
@@ -20,13 +22,16 @@ public class Level {
 	public static final String BALL_IMAGE = "ball.gif";
 	public static final int SIZE = 400;
 	public static final Paint BACKGROUND = Color.WHITE;
-	public static final int KEY_INPUT_SPEED = 20;
+	public int KEY_INPUT_SPEED = 20;
 	public static final double GROWTH_RATE = 1.1;
-	public static final int BOUNCER_MIN_SIZE = 10;
-
+	public static final double BALL_SIZE=10;
+	public static final double BIG_BALL_SIZE=20;
+    
+	public Image ball_image;
 	public int life;
 	public int score;
 	public Text scoreText;
+	public ArrayList<PowerUp> currentPowerUp=new ArrayList<PowerUp>();
 	public static Timeline animation;
 	public Brick[] bricks;
 	public int[] brickConfig = { 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 2, 2, 3, 2, 2, 2, 2, 2, 3, 2, 1,1,1,1,1,1,1,1,1 };
@@ -34,9 +39,10 @@ public class Level {
 	// some things we need to remember during our game
 	private Scene myScene;
 	private ImageView myBouncer1;
-	private ImageView paddle;
+	private Paddle paddle;
 	private Point2D myVelocity1;
 	private Random dice = new Random();
+	
 	
 
 	// pass back to the main
@@ -58,24 +64,28 @@ public class Level {
 		root = new Group();
 		// create a place to see the shapes
 		myScene = new Scene(root, width, height, background);
-		// make some shapes and set their properties
-		Image image = new Image(getClass().getClassLoader().getResourceAsStream(BALL_IMAGE));
-		myBouncer1 = makeBouncer(image, width, height);
+		
+		// Set up ball
+	    ball_image = new Image(getClass().getClassLoader().getResourceAsStream(BALL_IMAGE));
+		myBouncer1 = makeBouncer(ball_image, BALL_SIZE);
+		myBouncer1.setX(SIZE / 2);
+		myBouncer1.setY(SIZE - 50 - 12);
+		myVelocity1 = new Point2D(0, 0);
 
 		// set up bricks
 
 		bricks = setUpBricks(brickConfig);
 		for (int i = 0; i < bricks.length; i++) {
-			root.getChildren().add(bricks[i].image);
+			root.getChildren().add(bricks[i].getImage());
 		}
 
 		// set up paddle
 
-		paddle = setUpPaddle();
+		paddle = setUpPaddle(40);
 
 		// order added to the group is the order in which they are drawn
 		root.getChildren().add(myBouncer1);
-		root.getChildren().add(paddle);
+		root.getChildren().add(paddle.getImage());
 
 		// set up scoreboard
 
@@ -114,16 +124,17 @@ public class Level {
 
 			}
 			scoreText.setText("Score: " + score + "   Life: " + life);
+			paddle.setXord(SIZE / 2 - paddle.getImage().getFitWidth()/2);
+			paddle.setYord(SIZE - 50);
 			myBouncer1.setX(SIZE / 2);
 			myBouncer1.setY(SIZE - 50 - 12);
 			myVelocity1 = new Point2D(0, 0);
-			paddle.setX(SIZE / 2 - 30);
-			paddle.setY(SIZE - 50);
+
 
 		}
 
 		// ball hits the paddle
-		if (myBouncer1.getBoundsInParent().intersects(paddle.getBoundsInParent())) {
+		if (myBouncer1.getBoundsInParent().intersects(paddle.getImage().getBoundsInParent())) {
 			myVelocity1 = new Point2D(myVelocity1.getX(), -myVelocity1.getY());
 
 		}
@@ -131,56 +142,136 @@ public class Level {
 		// ball hits the bricks
 
 		int count = 0;
+		
 
 		for (int i = 0; i < bricks.length; i++) {
-			if (bricks[i].image.isVisible() == false) {
+			if (bricks[i].getImage().isVisible() == false) {
 				count = count + 1;
 			}
-			if (myBouncer1.getBoundsInParent().intersects(bricks[i].image.getBoundsInParent())
-					&& bricks[i].image.isVisible() == true) {
+			if (myBouncer1.getBoundsInParent().intersects(bricks[i].getImage().getBoundsInParent())
+					&& bricks[i].getImage().isVisible() == true) {
 				// hit by once and cleared, 10 points
-				if (bricks[i].type==1) {
-					bricks[i].image.setVisible(false);
-					bricks[i].hitTimes=1;
+				
+				
+				
+				if (bricks[i].getType()==1) {
+					bricks[i].getImage().setVisible(false);
+					
 					score = score + 10;
 					scoreText.setText("Score: " + score + "   Life: " + life);
 
 				}
 				
 				//hit three times to clear, each hit worths 10 points, final clearance 30 points
-				if (bricks[i].type==2) {
-					bricks[i].hitTimes+=1;
-					if (bricks[i].hitTimes==3) {
-						bricks[i].image.setVisible(false);
+				//hit once become 
+				if (bricks[i].getType()==2) {
+					//brick is never hit
+					if (bricks[i].getOpacity()==1.0 && bricks[i].getPreviousHit()==false) {
+						score=score+10;
+						scoreText.setText("Score: " + score + "   Life: " + life);
+						bricks[i].setOpacity(0.6);
+					}
+					
+					//brick is hit once
+					else if (bricks[i].getOpacity()==0.6 && bricks[i].getPreviousHit()==false) {
+						score=score+10;
+						scoreText.setText("Score: " + score + "   Life: " + life);
+						bricks[i].setOpacity(0.3);
+					}
+					
+					//brick is hit twice
+					else if (bricks[i].getOpacity()==0.3 && bricks[i].getPreviousHit()==false) {
+						bricks[i].getImage().setVisible(false);
 						score=score+30;
 						scoreText.setText("Score: " + score + "   Life: " + life);
 					}
-					else {
-						score=score+10;
-						scoreText.setText("Score: " + score + "   Life: " + life);
-					}
+					
 					
 				}
 				
 				
 				//drop Power-ups, each worths 20 points
-				if (bricks[i].type==3) {
-					bricks[i].image.setVisible(false);
-					bricks[i].hitTimes=1;
+				if (bricks[i].getType()==3) {
+					bricks[i].getImage().setVisible(false);
+					
 					score = score + 20;
 					scoreText.setText("Score: " + score + "   Life: " + life);
 					
-					PowerUp power=bricks[i].powerUp();
-					power.image.setX(bricks[i].image.getX()+15);
-					power.image.setY(bricks[i].image.getY()+20);
-					root.getChildren().add(power.image);
+					double Xord=bricks[i].getImage().getX()+15;
+					double Yord=bricks[i].getImage().getY()+20;
+					PowerUp power=bricks[i].powerUp(Xord, Yord);
+					currentPowerUp.add(power);
+					root.getChildren().add(power.getImage());
 					
 					
 				}
+				
+				bricks[i].setPreviousHit(true);
+				
+				
 
 			}
+			
+			else {
+				bricks[i].setPreviousHit(false);
+			}
+			
+		
+			
+			
 
 		}
+		
+		//Check every existing PowerUp
+		for (int i=0;i<currentPowerUp.size();i++) {
+			
+			//update PowerUp position
+			PowerUp current=currentPowerUp.get(i);
+			current.createMotion();
+			
+			//if reach the bottom
+			if (current.getYord() > myScene.getHeight() - current.getImage().getBoundsInLocal().getHeight()) {
+				root.getChildren().remove(current.getImage());
+				currentPowerUp.remove(current);
+			}
+			
+			//Check collision, get function working
+			if (current.getImage().getBoundsInParent().intersects(paddle.getImage().getBoundsInParent())){
+				
+				root.getChildren().remove(current.getImage());
+				currentPowerUp.remove(current);
+				
+				//make paddle longer
+				if (current.getType()==0) {
+					root.getChildren().remove(paddle.getImage());
+					paddle=setUpPaddle(80);
+					root.getChildren().add(paddle.getImage());
+				}
+				
+				//make ball move faster
+				if (current.getType()==1) {
+					myVelocity1 = new Point2D(myVelocity1.getX()*1.5, myVelocity1.getY()*1.5);
+				}
+				
+				//make ball bigger
+				if (current.getType()==2) {
+					double Xord=myBouncer1.getX();
+					double Yord=myBouncer1.getY();
+					root.getChildren().remove(myBouncer1);
+					myBouncer1=makeBouncer(ball_image, BIG_BALL_SIZE);
+					myBouncer1.setX(Xord);
+					myBouncer1.setY(Yord);
+					root.getChildren().add(myBouncer1);
+					
+					
+				}
+			}
+		}
+		
+	
+		
+	
+		
 
 		// all bricks clear
 		if (count == bricks.length) {
@@ -194,16 +285,13 @@ public class Level {
 	}
 
 	// Create a bouncer from a given image
-	private ImageView makeBouncer(Image image, int screenWidth, int screenHeight) {
+	private ImageView makeBouncer(Image image, double size) {
 		ImageView result = new ImageView(image);
 		// make sure it stays a circle
-		int size = BOUNCER_MIN_SIZE;
 		result.setFitWidth(size);
 		result.setFitHeight(size);
-		// make sure it stays within the bounds
-		result.setX(SIZE / 2);
-		result.setY(SIZE - 50 - 12);
-		myVelocity1 = new Point2D(0, 0);
+		
+
 		return result;
 	}
 
@@ -215,15 +303,25 @@ public class Level {
 
 	// What to do each time a key is pressed
 	private void handleKeyInput(KeyCode code) {
-
-		if (code == KeyCode.RIGHT && paddle.getX() <= myScene.getWidth() - paddle.getBoundsInLocal().getWidth()) {
-			paddle.setX(paddle.getX() + KEY_INPUT_SPEED);
+		
+		//Paddle extra function: when score reaches 300, paddle can be moved up and down
+         if (score>=300) {
+        	     if (code == KeyCode.UP && paddle.getYord() >= 0) {
+        	    	     paddle.setYord(paddle.getYord()-KEY_INPUT_SPEED);
+        	     }
+        	     if (code == KeyCode.DOWN && paddle.getYord() <= myScene.getHeight() - paddle.getImage().getBoundsInLocal().getHeight()) {
+    	    	     paddle.setYord(paddle.getYord()+KEY_INPUT_SPEED);
+    	    	     
+    	     }
+         }
+		if (code == KeyCode.RIGHT && paddle.getXord() <= myScene.getWidth() - paddle.getImage().getBoundsInLocal().getWidth()) {
+			paddle.setXord(paddle.getXord() + KEY_INPUT_SPEED);
 		}
-		if (code == KeyCode.LEFT && paddle.getX() >= 0) {
-			paddle.setX(paddle.getX() - KEY_INPUT_SPEED);
+		if (code == KeyCode.LEFT && paddle.getXord() >= 0) {
+			paddle.setXord(paddle.getXord() - KEY_INPUT_SPEED);
 		}
 		if (code == KeyCode.S) {
-			myVelocity1 = new Point2D(getRandomInRange(80, 100), getRandomInRange(-100, -80));
+			myVelocity1 = new Point2D(getRandomInRange(100, 120), getRandomInRange(-120, -100));
 		}
 
 	}
@@ -242,10 +340,10 @@ public class Level {
 		Brick[] bricks = makeBrick(brickConfig);
 
 		for (int i = 0; i < bricks.length; i++) {
-			bricks[i].image.setFitHeight(20);
-			bricks[i].image.setFitWidth(30);
-			bricks[i].image.setX((i % 10) * 40);
-			bricks[i].image.setY((i / 10) * 20 + 20);
+			bricks[i].getImage().setFitHeight(20);
+			bricks[i].getImage().setFitWidth(30);
+			bricks[i].getImage().setX((i % 10) * 40);
+			bricks[i].getImage().setY((i / 10) * 20 + 20);
 
 		}
 
@@ -278,22 +376,14 @@ public class Level {
 
 	}
 
-	public ImageView setUpPaddle() {
+	public Paddle setUpPaddle(double size) {
 		Image paddleImage = new Image(getClass().getClassLoader().getResourceAsStream("paddle.gif"));
-		ImageView paddle = makePaddle(paddleImage);
+		ImageView paddleImageView=new ImageView(paddleImage);
+		Paddle paddle=new Paddle(paddleImageView,SIZE/2-size/2,SIZE-50,size);
 
 		return paddle;
 	}
 
-	private ImageView makePaddle(Image image) {
-		ImageView result = new ImageView(image);
-
-		// make sure it stays within the bounds
-		result.setX(SIZE / 2 - 30);
-		result.setY(SIZE - 50);
-		return result;
-
-	}
 
 	public Text setUpScore(int score, int life) {
 		score = 0;

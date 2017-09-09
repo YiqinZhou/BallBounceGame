@@ -16,9 +16,10 @@ import javafx.util.Duration;
 import java.util.Random;
 
 public class ExampleBounce extends Application {
-
+    
+	//Set up properties
 	public static final int SIZE = 400;
-	public static final Paint BACKGROUND = Color.WHITE;
+	public static final Paint BACKGROUND = Color.HONEYDEW;
 	public static final String TITLE = "BreakOut";
 	public static final int FRAMES_PER_SECOND = 60;
 	public static final int MILLISECOND_DELAY = 1000 / FRAMES_PER_SECOND;

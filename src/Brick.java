@@ -6,9 +6,10 @@ import javafx.scene.image.ImageView;
 public class Brick {
 	
 	
-   public int type;
-   public ImageView image;
-   public int hitTimes;
+   private int type;
+   private ImageView image;
+   private boolean previousHit;
+   private double opacity;
   
   
    public ImageView[] bricks;
@@ -24,30 +25,59 @@ public class Brick {
    public Brick(int type, ImageView image) {
 	   this.type=type;
 	   this.image=image;
-	   this.hitTimes=0;
+	   this.previousHit=false;
+	   this.opacity=1.0;
    }
    
-   public PowerUp powerUp() {
+   public int getType() {
+	   return this.type;
+   }
+   
+   public ImageView getImage() {
+	   return this.image;
+   }
+   
+   public boolean getPreviousHit() {
+	   return this.previousHit;
+   }
+   
+   public double getOpacity() {
+	   return this.opacity;
+   }
+   
+   public void setPreviousHit(boolean ok) {
+	   this.previousHit=ok;
+   }
+   
+   public void setOpacity(double opacity) {
+	   this.opacity=opacity;
+	   this.image.setOpacity(opacity);
+   }
+ 
+   
+   public PowerUp powerUp(double Xord, double Yord) {
 	   Random dice=new Random();
 	   int type=dice.nextInt(2-0);
-	   
+	     
 	   if (type==0) {
-		   PowerUp power=new PowerUp(type,new ImageView(Power0Image));
+		   PowerUp power=new PowerUp(type,new ImageView(Power0Image), Xord, Yord);
 		   return power;
 	   }
 	   
+	   
 	   if (type==1) {
-		   PowerUp power=new PowerUp(type,new ImageView(Power1Image));
+		   PowerUp power=new PowerUp(type,new ImageView(Power1Image), Xord, Yord);
 		   return power;
 	   }
 	   
 	   if (type==2) {
-		   PowerUp power=new PowerUp(type,new ImageView(Power2Image));
+		   PowerUp power=new PowerUp(type,new ImageView(Power2Image), Xord, Yord);
 		   return power;
 	   }
 	   
 	   
-	  return new PowerUp(type,new ImageView(Power0Image));
+	   
+	  return new PowerUp(type,new ImageView(Power0Image),Xord, Yord);
 	   
    }
 
