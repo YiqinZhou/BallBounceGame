@@ -45,8 +45,8 @@ public class ExampleBounce extends Application {
 		stage.setScene(scene1);
 		stage.setTitle(TITLE);
 		stage.show();
+		
 		// attach "game loop" to timeline to play it
-
 		KeyFrame frame = new KeyFrame(Duration.millis(MILLISECOND_DELAY), e -> level1.step(SECOND_DELAY));
 		animation.setCycleCount(Timeline.INDEFINITE);
 		animation.getKeyFrames().add(frame);

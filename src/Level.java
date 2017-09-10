@@ -43,9 +43,19 @@ public class Level {
 	private ImageView myBouncer1;
 	private Paddle paddle;
 	private Point2D myVelocity1;
+	
+	//for release extra paddle function
 	private Point2D rememberVelocity;
+	
 	private Random dice = new Random();
+	
+	//to control the game variable
 	private boolean gameStart = false;
+	
+	//for speeding up extra paddle function
+	private String previousCode="nothing";
+	private double leftVelocity;
+	private double rightVelocity;
 
 	// pass back to the main
 	public int pass = -1;
@@ -330,24 +340,60 @@ public class Level {
 				paddle.setXord(paddle.getXord() - KEY_INPUT_SPEED);
 			}
 		}
-
+         
+		//paddle extra function: when score between 200-300, paddle can catch the ball and 
+		//release it only after R is pressed
 		if (score >= 200 && score < 300
 				&& myBouncer1.getBoundsInParent().intersects(paddle.getImage().getBoundsInParent())
 				&& gameStart == true) {
-			if (code == KeyCode.Q) {
+			if (code == KeyCode.R) {
 				myVelocity1 = new Point2D(rememberVelocity.getX(), -rememberVelocity.getY());
 
 				paddle.setCatchby(true);
 			}
-			if (code == KeyCode.RIGHT) {
+			if (code == KeyCode.RIGHT && 
+				paddle.getXord() <= myScene.getWidth() - paddle.getImage().getBoundsInLocal().getWidth()) {
 				paddle.setXord(paddle.getXord() + KEY_INPUT_SPEED);
 				myBouncer1.setX(myBouncer1.getX() + KEY_INPUT_SPEED);
 			}
-			if (code == KeyCode.LEFT) {
+			if (code == KeyCode.LEFT && paddle.getXord() >= 0) {
 				paddle.setXord(paddle.getXord() - KEY_INPUT_SPEED);
 				myBouncer1.setX(myBouncer1.getX() - KEY_INPUT_SPEED);
 			}
 		}
+		
+		//paddle extra function: speeding up in one direction
+		
+		if (score>=100 && score<200) {
+			if (code == KeyCode.LEFT && paddle.getXord() >= 0) {
+				if (previousCode=="left") {
+					leftVelocity+=2;
+					paddle.setXord(paddle.getXord() - leftVelocity);
+					
+				}
+				else {
+					leftVelocity=KEY_INPUT_SPEED;
+					paddle.setXord(paddle.getXord() - leftVelocity);
+					previousCode="left";
+				}
+			}
+			
+			
+			if (code == KeyCode.RIGHT && 
+				paddle.getXord() <= myScene.getWidth() - paddle.getImage().getBoundsInLocal().getWidth()) {
+				if (previousCode=="right") {
+					rightVelocity+=2;
+					paddle.setXord(paddle.getXord() + rightVelocity);
+					
+				}
+				else {
+					rightVelocity=KEY_INPUT_SPEED;
+					paddle.setXord(paddle.getXord() + rightVelocity);
+					previousCode="right";
+				}
+			}
+		}
+		
 
 		else if (gameStart == true) {
 			if (code == KeyCode.RIGHT
