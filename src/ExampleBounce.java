@@ -7,6 +7,7 @@ import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
@@ -27,19 +28,22 @@ public class ExampleBounce extends Application {
 
 	public Timeline animation;
 	public Level level1;
-	public static TransitionScenes transition = new TransitionScenes();
+	
 	public int[] brickConfig = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 			3 };
 	public ImageView[] bricks;
-
+ 
+	//Manage different scenes
 	static Stage stage;
+	TransitionScenes transition = new TransitionScenes();
+	Scene scene1, scene2;
 
 	@Override
 	public void start(Stage primaryStage) {
 		animation = new Timeline();
 
 		stage = primaryStage;
-		level1 = new Level(animation);
+		level1 = new Level(animation,stage);
 		// attach scene to the stage and display it
 		Scene scene1 = level1.setupGame(SIZE, SIZE, BACKGROUND);
 		stage.setScene(scene1);
@@ -51,6 +55,7 @@ public class ExampleBounce extends Application {
 		animation.setCycleCount(Timeline.INDEFINITE);
 		animation.getKeyFrames().add(frame);
 		animation.play();
+	
 
 	}
 
@@ -60,7 +65,6 @@ public class ExampleBounce extends Application {
 			Scene failScene = new Scene(root, SIZE, SIZE, BACKGROUND);
 			stage.setScene(failScene);
 		}
-
 	}
 
 	// Create the game's "scene": what shapes will be in the game and their starting
@@ -69,6 +73,7 @@ public class ExampleBounce extends Application {
 	public static void main(String[] args) {
 
 		launch(args);
+		
 
 	}
 

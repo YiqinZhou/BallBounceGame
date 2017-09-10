@@ -2,15 +2,19 @@ import javafx.animation.KeyFrame;
 import javafx.geometry.Point2D;
 import javafx.animation.Timeline;
 import javafx.application.Application;
+import javafx.event.ActionEvent;
 import javafx.scene.Group;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
+import javafx.stage.Popup;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
@@ -33,7 +37,7 @@ public class Level {
 	public int score;
 	public Text scoreText;
 	public ArrayList<PowerUp> currentPowerUp = new ArrayList<PowerUp>();
-	public static Timeline animation;
+	
 	public Brick[] bricks;
 	public int[] brickConfig = { 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 2, 2, 3, 2, 2, 2, 2, 2, 3, 2, 1, 1, 3, 3, 1, 1, 1, 1,
 			1 };
@@ -63,11 +67,15 @@ public class Level {
 	Image Brick3Image = new Image(getClass().getClassLoader().getResourceAsStream("brick3.gif"));
 	Image Brick2Image = new Image(getClass().getClassLoader().getResourceAsStream("brick4.gif"));
 	Image Brick1Image = new Image(getClass().getClassLoader().getResourceAsStream("brick10.gif"));
-
+   
+	//constructor of level
 	public Group root;
+	private Timeline animation;
+	private static Stage stage;
 
-	public Level(Timeline animation) {
+	public Level(Timeline animation, Stage stage) {
 		this.animation = animation;
+		this.stage=stage;
 
 	}
 
@@ -136,12 +144,15 @@ public class Level {
 				animation.stop();
 				pass = 0;
 
+				showPopUp("FAIL");
+		        
+
 			}
 			scoreText.setText("Score: " + score + "   Life: " + life);
 			paddle.setXord(SIZE / 2 - paddle.getImage().getFitWidth() / 2);
 			paddle.setYord(SIZE - paddleApartFromBottom);
-			myBouncer1.setX(SIZE / 2 - BALL_SIZE / 2);
-			myBouncer1.setY(SIZE - paddleApartFromBottom - BALL_SIZE);
+			myBouncer1.setX(SIZE / 2 - myBouncer1.getFitWidth()/2);
+			myBouncer1.setY(SIZE - paddleApartFromBottom - myBouncer1.getFitHeight());
 			gameStart = false;
 			myVelocity1 = new Point2D(0, 0);
 
@@ -149,6 +160,10 @@ public class Level {
 
 		// ball hits the paddle
 		if (myBouncer1.getBoundsInParent().intersects(paddle.getImage().getBoundsInParent())) {
+			if (!myBouncer1.getBoundsInParent().intersects(paddle.getImage().getBoundsInParent())) {
+				paddle.setCatchby(false);
+				rememberVelocity = new Point2D(myVelocity1.getX(), myVelocity1.getY());
+			}
 			if (score < 200 || score >= 300) {
 				myVelocity1 = new Point2D(myVelocity1.getX(), -myVelocity1.getY());
 			}
@@ -163,10 +178,7 @@ public class Level {
 			}
 
 		}
-		if (!myBouncer1.getBoundsInParent().intersects(paddle.getImage().getBoundsInParent())) {
-			paddle.setCatchby(false);
-			rememberVelocity = new Point2D(myVelocity1.getX(), myVelocity1.getY());
-		}
+
 
 		// ball hits the bricks
 
@@ -348,23 +360,25 @@ public class Level {
 				&& gameStart == true) {
 			if (code == KeyCode.R) {
 				myVelocity1 = new Point2D(rememberVelocity.getX(), -rememberVelocity.getY());
-
+                 System.out.println(rememberVelocity);
 				paddle.setCatchby(true);
 			}
 			if (code == KeyCode.RIGHT && 
 				paddle.getXord() <= myScene.getWidth() - paddle.getImage().getBoundsInLocal().getWidth()) {
 				paddle.setXord(paddle.getXord() + KEY_INPUT_SPEED);
 				myBouncer1.setX(myBouncer1.getX() + KEY_INPUT_SPEED);
+				System.out.println("right");
 			}
 			if (code == KeyCode.LEFT && paddle.getXord() >= 0) {
 				paddle.setXord(paddle.getXord() - KEY_INPUT_SPEED);
 				myBouncer1.setX(myBouncer1.getX() - KEY_INPUT_SPEED);
+				System.out.println("left");
 			}
 		}
 		
 		//paddle extra function: speeding up in one direction
 		
-		if (score>=100 && score<200) {
+		if (score>=100 && score<200 && gameStart==true) {
 			if (code == KeyCode.LEFT && paddle.getXord() >= 0) {
 				if (previousCode=="left") {
 					leftVelocity+=2;
@@ -478,5 +492,27 @@ public class Level {
 		scoreText.setY(10);
 		return scoreText;
 	}
+	
+	public void showPopUp(String message) {
+		Popup popup=new Popup();
+		popup.setX(-SIZE/2);
+		popup.setY(SIZE/2);
+		
+		
+		Button again=new Button("Try again");
+		again.setOnAction(e-> ButtonClicked(e));
+		popup.getContent().add(again);
+		popup.show(stage);
+		
+	}
+
+	private Object ButtonClicked(ActionEvent e) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+
+
+	
 
 }

@@ -24,12 +24,12 @@ public class Paddle {
     }
     
 	public void setYord(double Yord) {
-		this.image.setY(Yord);
+		image.setY(Yord);
 		this.Yord=Yord;
 	}
 	
 	public void setXord(double Xord) {
-		this.image.setX(Xord);
+		image.setX(Xord);
 		this.Xord=Xord;
 	}
 	
