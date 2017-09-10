@@ -5,6 +5,7 @@ public class Paddle {
     private double Xord;
     private double Yord;
     private double width;
+    private boolean catchby;
     
     public Paddle(ImageView image, double Xord, double Yord, double width) {
     	    this.image=image;
@@ -14,6 +15,7 @@ public class Paddle {
     	    image.setX(Xord);
     	    image.setY(Yord);
     	    image.setFitWidth(width);
+    	    this.catchby=false;
     	    
     }
     
@@ -30,6 +32,11 @@ public class Paddle {
 		this.image.setX(Xord);
 		this.Xord=Xord;
 	}
+	
+	public void setCatchby(boolean catchby) {
+		this.catchby=catchby;
+	}
+	
 
 	
 	public double getYord() {
@@ -38,5 +45,9 @@ public class Paddle {
 	
 	public double getXord() {
 		return this.Xord;
+	}
+	
+	public boolean getCatchby() {
+		return this.catchby;
 	}
 }

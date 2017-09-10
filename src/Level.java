@@ -19,31 +19,33 @@ import java.util.Random;
 
 public class Level {
 
+	private static final int paddleApartFromBottom = 50;
 	public static final String BALL_IMAGE = "ball.gif";
 	public static final int SIZE = 400;
 	public static final Paint BACKGROUND = Color.WHITE;
 	public int KEY_INPUT_SPEED = 20;
 	public static final double GROWTH_RATE = 1.1;
-	public static final double BALL_SIZE=10;
-	public static final double BIG_BALL_SIZE=20;
-    
+	public static final double BALL_SIZE = 10;
+	public static final double BIG_BALL_SIZE = 20;
+
 	public Image ball_image;
 	public int life;
 	public int score;
 	public Text scoreText;
-	public ArrayList<PowerUp> currentPowerUp=new ArrayList<PowerUp>();
+	public ArrayList<PowerUp> currentPowerUp = new ArrayList<PowerUp>();
 	public static Timeline animation;
 	public Brick[] bricks;
-	public int[] brickConfig = { 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 2, 2, 3, 2, 2, 2, 2, 2, 3, 2, 1,1,1,1,1,1,1,1,1 };
+	public int[] brickConfig = { 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 2, 2, 3, 2, 2, 2, 2, 2, 3, 2, 1, 1, 3, 3, 1, 1, 1, 1,
+			1 };
 
 	// some things we need to remember during our game
 	private Scene myScene;
 	private ImageView myBouncer1;
 	private Paddle paddle;
 	private Point2D myVelocity1;
+	private Point2D rememberVelocity;
 	private Random dice = new Random();
-	
-	
+	private boolean gameStart = false;
 
 	// pass back to the main
 	public int pass = -1;
@@ -51,7 +53,7 @@ public class Level {
 	Image Brick3Image = new Image(getClass().getClassLoader().getResourceAsStream("brick3.gif"));
 	Image Brick2Image = new Image(getClass().getClassLoader().getResourceAsStream("brick4.gif"));
 	Image Brick1Image = new Image(getClass().getClassLoader().getResourceAsStream("brick10.gif"));
-	
+
 	public Group root;
 
 	public Level(Timeline animation) {
@@ -64,13 +66,6 @@ public class Level {
 		root = new Group();
 		// create a place to see the shapes
 		myScene = new Scene(root, width, height, background);
-		
-		// Set up ball
-	    ball_image = new Image(getClass().getClassLoader().getResourceAsStream(BALL_IMAGE));
-		myBouncer1 = makeBouncer(ball_image, BALL_SIZE);
-		myBouncer1.setX(SIZE / 2);
-		myBouncer1.setY(SIZE - 50 - 12);
-		myVelocity1 = new Point2D(0, 0);
 
 		// set up bricks
 
@@ -82,6 +77,13 @@ public class Level {
 		// set up paddle
 
 		paddle = setUpPaddle(40);
+
+		// Set up ball
+		ball_image = new Image(getClass().getClassLoader().getResourceAsStream(BALL_IMAGE));
+		myBouncer1 = makeBouncer(ball_image, BALL_SIZE);
+		myBouncer1.setX(SIZE / 2 - BALL_SIZE / 2);
+		myBouncer1.setY(SIZE - paddleApartFromBottom - BALL_SIZE);
+		myVelocity1 = new Point2D(0, 0);
 
 		// order added to the group is the order in which they are drawn
 		root.getChildren().add(myBouncer1);
@@ -107,6 +109,8 @@ public class Level {
 	public void step(double elapsedTime) {
 		// update attributes
 
+		moveBouncer(myBouncer1, myVelocity1, elapsedTime);
+
 		if (myBouncer1.getX() < 0
 				|| myBouncer1.getX() > myScene.getWidth() - myBouncer1.getBoundsInLocal().getWidth()) {
 			myVelocity1 = new Point2D(-myVelocity1.getX(), myVelocity1.getY());
@@ -124,25 +128,39 @@ public class Level {
 
 			}
 			scoreText.setText("Score: " + score + "   Life: " + life);
-			paddle.setXord(SIZE / 2 - paddle.getImage().getFitWidth()/2);
-			paddle.setYord(SIZE - 50);
-			myBouncer1.setX(SIZE / 2);
-			myBouncer1.setY(SIZE - 50 - 12);
+			paddle.setXord(SIZE / 2 - paddle.getImage().getFitWidth() / 2);
+			paddle.setYord(SIZE - paddleApartFromBottom);
+			myBouncer1.setX(SIZE / 2 - BALL_SIZE / 2);
+			myBouncer1.setY(SIZE - paddleApartFromBottom - BALL_SIZE);
+			gameStart = false;
 			myVelocity1 = new Point2D(0, 0);
-
 
 		}
 
 		// ball hits the paddle
 		if (myBouncer1.getBoundsInParent().intersects(paddle.getImage().getBoundsInParent())) {
-			myVelocity1 = new Point2D(myVelocity1.getX(), -myVelocity1.getY());
+			if (score < 200 || score >= 300) {
+				myVelocity1 = new Point2D(myVelocity1.getX(), -myVelocity1.getY());
+			}
 
+			// extra paddle power: hold the ball and release afterwards
+			if (score >= 200 && score < 300 && paddle.getCatchby() == false) {
+
+				myVelocity1 = new Point2D(0, 0);
+			}
+			if (score >= 200 && score < 300 && paddle.getCatchby() == true) {
+				myVelocity1 = new Point2D(myVelocity1.getX(), -myVelocity1.getY());
+			}
+
+		}
+		if (!myBouncer1.getBoundsInParent().intersects(paddle.getImage().getBoundsInParent())) {
+			paddle.setCatchby(false);
+			rememberVelocity = new Point2D(myVelocity1.getX(), myVelocity1.getY());
 		}
 
 		// ball hits the bricks
 
 		int count = 0;
-		
 
 		for (int i = 0; i < bricks.length; i++) {
 			if (bricks[i].getImage().isVisible() == false) {
@@ -151,127 +169,111 @@ public class Level {
 			if (myBouncer1.getBoundsInParent().intersects(bricks[i].getImage().getBoundsInParent())
 					&& bricks[i].getImage().isVisible() == true) {
 				// hit by once and cleared, 10 points
-				
-				
-				
-				if (bricks[i].getType()==1) {
+
+				if (bricks[i].getType() == 1) {
 					bricks[i].getImage().setVisible(false);
-					
+
 					score = score + 10;
 					scoreText.setText("Score: " + score + "   Life: " + life);
 
 				}
-				
-				//hit three times to clear, each hit worths 10 points, final clearance 30 points
-				//hit once become 
-				if (bricks[i].getType()==2) {
-					//brick is never hit
-					if (bricks[i].getOpacity()==1.0 && bricks[i].getPreviousHit()==false) {
-						score=score+10;
+
+				// hit three times to clear, each hit worths 10 points, final clearance 30
+				// points
+				// hit once become
+				if (bricks[i].getType() == 2) {
+					// brick is never hit
+					if (bricks[i].getOpacity() == 1.0 && bricks[i].getPreviousHit() == false) {
+						score = score + 10;
 						scoreText.setText("Score: " + score + "   Life: " + life);
 						bricks[i].setOpacity(0.6);
 					}
-					
-					//brick is hit once
-					else if (bricks[i].getOpacity()==0.6 && bricks[i].getPreviousHit()==false) {
-						score=score+10;
+
+					// brick is hit once
+					else if (bricks[i].getOpacity() == 0.6 && bricks[i].getPreviousHit() == false) {
+						score = score + 10;
 						scoreText.setText("Score: " + score + "   Life: " + life);
 						bricks[i].setOpacity(0.3);
 					}
-					
-					//brick is hit twice
-					else if (bricks[i].getOpacity()==0.3 && bricks[i].getPreviousHit()==false) {
+
+					// brick is hit twice
+					else if (bricks[i].getOpacity() == 0.3 && bricks[i].getPreviousHit() == false) {
 						bricks[i].getImage().setVisible(false);
-						score=score+30;
+						score = score + 30;
 						scoreText.setText("Score: " + score + "   Life: " + life);
 					}
-					
-					
+
 				}
-				
-				
-				//drop Power-ups, each worths 20 points
-				if (bricks[i].getType()==3) {
+
+				// drop Power-ups, each worths 20 points
+				if (bricks[i].getType() == 3) {
 					bricks[i].getImage().setVisible(false);
-					
+
 					score = score + 20;
 					scoreText.setText("Score: " + score + "   Life: " + life);
-					
-					double Xord=bricks[i].getImage().getX()+15;
-					double Yord=bricks[i].getImage().getY()+20;
-					PowerUp power=bricks[i].powerUp(Xord, Yord);
+
+					double Xord = bricks[i].getImage().getX() + 15;
+					double Yord = bricks[i].getImage().getY() + 20;
+					PowerUp power = bricks[i].powerUp(Xord, Yord);
 					currentPowerUp.add(power);
 					root.getChildren().add(power.getImage());
-					
-					
+
 				}
-				
+
 				bricks[i].setPreviousHit(true);
-				
-				
 
 			}
-			
+
 			else {
 				bricks[i].setPreviousHit(false);
 			}
-			
-		
-			
-			
 
 		}
-		
-		//Check every existing PowerUp
-		for (int i=0;i<currentPowerUp.size();i++) {
-			
-			//update PowerUp position
-			PowerUp current=currentPowerUp.get(i);
+
+		// Check every existing PowerUp
+		for (int i = 0; i < currentPowerUp.size(); i++) {
+
+			// update PowerUp position
+			PowerUp current = currentPowerUp.get(i);
 			current.createMotion();
-			
-			//if reach the bottom
+
+			// if reach the bottom
 			if (current.getYord() > myScene.getHeight() - current.getImage().getBoundsInLocal().getHeight()) {
 				root.getChildren().remove(current.getImage());
 				currentPowerUp.remove(current);
 			}
-			
-			//Check collision, get function working
-			if (current.getImage().getBoundsInParent().intersects(paddle.getImage().getBoundsInParent())){
-				
+
+			// Check collision, get function working
+			if (current.getImage().getBoundsInParent().intersects(paddle.getImage().getBoundsInParent())) {
+
 				root.getChildren().remove(current.getImage());
 				currentPowerUp.remove(current);
-				
-				//make paddle longer
-				if (current.getType()==0) {
+
+				// make paddle longer
+				if (current.getType() == 0) {
 					root.getChildren().remove(paddle.getImage());
-					paddle=setUpPaddle(80);
+					paddle = setUpPaddle(80);
 					root.getChildren().add(paddle.getImage());
 				}
-				
-				//make ball move faster
-				if (current.getType()==1) {
-					myVelocity1 = new Point2D(myVelocity1.getX()*1.5, myVelocity1.getY()*1.5);
+
+				// make ball move faster
+				if (current.getType() == 1) {
+					myVelocity1 = new Point2D(myVelocity1.getX() * 1.5, myVelocity1.getY() * 1.5);
 				}
-				
-				//make ball bigger
-				if (current.getType()==2) {
-					double Xord=myBouncer1.getX();
-					double Yord=myBouncer1.getY();
+
+				// make ball bigger
+				if (current.getType() == 2) {
+					double Xord = myBouncer1.getX();
+					double Yord = myBouncer1.getY();
 					root.getChildren().remove(myBouncer1);
-					myBouncer1=makeBouncer(ball_image, BIG_BALL_SIZE);
+					myBouncer1 = makeBouncer(ball_image, BIG_BALL_SIZE);
 					myBouncer1.setX(Xord);
 					myBouncer1.setY(Yord);
 					root.getChildren().add(myBouncer1);
-					
-					
+
 				}
 			}
 		}
-		
-	
-		
-	
-		
 
 		// all bricks clear
 		if (count == bricks.length) {
@@ -279,8 +281,6 @@ public class Level {
 			pass = 1;
 
 		}
-
-		moveBouncer(myBouncer1, myVelocity1, elapsedTime);
 
 	}
 
@@ -290,7 +290,6 @@ public class Level {
 		// make sure it stays a circle
 		result.setFitWidth(size);
 		result.setFitHeight(size);
-		
 
 		return result;
 	}
@@ -303,25 +302,64 @@ public class Level {
 
 	// What to do each time a key is pressed
 	private void handleKeyInput(KeyCode code) {
-		
-		//Paddle extra function: when score reaches 300, paddle can be moved up and down
-         if (score>=300) {
-        	     if (code == KeyCode.UP && paddle.getYord() >= 0) {
-        	    	     paddle.setYord(paddle.getYord()-KEY_INPUT_SPEED);
-        	     }
-        	     if (code == KeyCode.DOWN && paddle.getYord() <= myScene.getHeight() - paddle.getImage().getBoundsInLocal().getHeight()) {
-    	    	     paddle.setYord(paddle.getYord()+KEY_INPUT_SPEED);
-    	    	     
-    	     }
-         }
-		if (code == KeyCode.RIGHT && paddle.getXord() <= myScene.getWidth() - paddle.getImage().getBoundsInLocal().getWidth()) {
-			paddle.setXord(paddle.getXord() + KEY_INPUT_SPEED);
-		}
-		if (code == KeyCode.LEFT && paddle.getXord() >= 0) {
-			paddle.setXord(paddle.getXord() - KEY_INPUT_SPEED);
-		}
-		if (code == KeyCode.S) {
+
+		// start the game
+		if (code == KeyCode.S && gameStart == false) {
 			myVelocity1 = new Point2D(getRandomInRange(100, 120), getRandomInRange(-120, -100));
+			gameStart = true;
+
+		}
+
+		// Paddle extra function: when score reaches 300, paddle can be moved up and
+		// down, BUT CANNOT BE WHEN GAME HASN'T STARTED
+		if (score >= 300 && gameStart == true) {
+			if (code == KeyCode.UP && paddle.getYord() >= 0) {
+				paddle.setYord(paddle.getYord() - KEY_INPUT_SPEED);
+
+			}
+			if (code == KeyCode.DOWN
+					&& paddle.getYord() <= myScene.getHeight() - paddle.getImage().getBoundsInLocal().getHeight()) {
+				paddle.setYord(paddle.getYord() + KEY_INPUT_SPEED);
+
+			}
+			if (code == KeyCode.RIGHT
+					&& paddle.getXord() <= myScene.getWidth() - paddle.getImage().getBoundsInLocal().getWidth()) {
+				paddle.setXord(paddle.getXord() + KEY_INPUT_SPEED);
+			}
+			if (code == KeyCode.LEFT && paddle.getXord() >= 0) {
+				paddle.setXord(paddle.getXord() - KEY_INPUT_SPEED);
+			}
+		}
+
+		if (score >= 200 && score < 300
+				&& myBouncer1.getBoundsInParent().intersects(paddle.getImage().getBoundsInParent())
+				&& gameStart == true) {
+			if (code == KeyCode.Q) {
+				myVelocity1 = new Point2D(rememberVelocity.getX(), -rememberVelocity.getY());
+
+				paddle.setCatchby(true);
+			}
+			if (code == KeyCode.RIGHT) {
+				paddle.setXord(paddle.getXord() + KEY_INPUT_SPEED);
+				myBouncer1.setX(myBouncer1.getX() + KEY_INPUT_SPEED);
+			}
+			if (code == KeyCode.LEFT) {
+				paddle.setXord(paddle.getXord() - KEY_INPUT_SPEED);
+				myBouncer1.setX(myBouncer1.getX() - KEY_INPUT_SPEED);
+			}
+		}
+
+		else if (gameStart == true) {
+			if (code == KeyCode.RIGHT
+					&& paddle.getXord() <= myScene.getWidth() - paddle.getImage().getBoundsInLocal().getWidth()) {
+				paddle.setXord(paddle.getXord() + KEY_INPUT_SPEED);
+
+			}
+			if (code == KeyCode.LEFT && paddle.getXord() >= 0) {
+				paddle.setXord(paddle.getXord() - KEY_INPUT_SPEED);
+
+			}
+
 		}
 
 	}
@@ -378,12 +416,11 @@ public class Level {
 
 	public Paddle setUpPaddle(double size) {
 		Image paddleImage = new Image(getClass().getClassLoader().getResourceAsStream("paddle.gif"));
-		ImageView paddleImageView=new ImageView(paddleImage);
-		Paddle paddle=new Paddle(paddleImageView,SIZE/2-size/2,SIZE-50,size);
+		ImageView paddleImageView = new ImageView(paddleImage);
+		Paddle paddle = new Paddle(paddleImageView, SIZE / 2 - size / 2, SIZE - paddleApartFromBottom, size);
 
 		return paddle;
 	}
-
 
 	public Text setUpScore(int score, int life) {
 		score = 0;

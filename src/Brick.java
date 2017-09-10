@@ -57,7 +57,7 @@ public class Brick {
    
    public PowerUp powerUp(double Xord, double Yord) {
 	   Random dice=new Random();
-	   int type=dice.nextInt(2-0);
+	   int type=dice.nextInt(3-0);
 	     
 	   if (type==0) {
 		   PowerUp power=new PowerUp(type,new ImageView(Power0Image), Xord, Yord);
