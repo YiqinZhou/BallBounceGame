@@ -37,7 +37,7 @@ public class Level {
 	public int score;
 	public Text scoreText;
 	public ArrayList<PowerUp> currentPowerUp = new ArrayList<PowerUp>();
-	
+
 	public Brick[] bricks;
 	public int[] brickConfig = { 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 2, 2, 3, 2, 2, 2, 2, 2, 3, 2, 1, 1, 3, 3, 1, 1, 1, 1,
 			1 };
@@ -47,17 +47,17 @@ public class Level {
 	private ImageView myBouncer1;
 	private Paddle paddle;
 	private Point2D myVelocity1;
-	
-	//for release extra paddle function
+
+	// for release extra paddle function
 	private Point2D rememberVelocity;
-	
+
 	private Random dice = new Random();
-	
-	//to control the game variable
+
+	// to control the game variable
 	private boolean gameStart = false;
-	
-	//for speeding up extra paddle function
-	private String previousCode="nothing";
+
+	// for speeding up extra paddle function
+	private String previousCode = "nothing";
 	private double leftVelocity;
 	private double rightVelocity;
 
@@ -67,15 +67,17 @@ public class Level {
 	Image Brick3Image = new Image(getClass().getClassLoader().getResourceAsStream("brick3.gif"));
 	Image Brick2Image = new Image(getClass().getClassLoader().getResourceAsStream("brick4.gif"));
 	Image Brick1Image = new Image(getClass().getClassLoader().getResourceAsStream("brick10.gif"));
-   
-	//constructor of level
+
+	// constructor of level
 	public Group root;
 	private Timeline animation;
 	private static Stage stage;
+	private int levelNumber;
 
-	public Level(Timeline animation, Stage stage) {
+	public Level(Timeline animation, Stage stage, int levelNumber) {
 		this.animation = animation;
-		this.stage=stage;
+		this.stage = stage;
+		this.levelNumber = levelNumber;
 
 	}
 
@@ -144,26 +146,25 @@ public class Level {
 				animation.stop();
 				pass = 0;
 
-				showPopUp("FAIL");
-		        
-
 			}
 			scoreText.setText("Score: " + score + "   Life: " + life);
 			paddle.setXord(SIZE / 2 - paddle.getImage().getFitWidth() / 2);
 			paddle.setYord(SIZE - paddleApartFromBottom);
-			myBouncer1.setX(SIZE / 2 - myBouncer1.getFitWidth()/2);
+			myBouncer1.setX(SIZE / 2 - myBouncer1.getFitWidth() / 2);
 			myBouncer1.setY(SIZE - paddleApartFromBottom - myBouncer1.getFitHeight());
 			gameStart = false;
 			myVelocity1 = new Point2D(0, 0);
 
 		}
 
+		if (!myBouncer1.getBoundsInParent().intersects(paddle.getImage().getBoundsInParent())) {
+			paddle.setCatchby(false);
+			rememberVelocity = new Point2D(myVelocity1.getX(), myVelocity1.getY());
+		}
+
 		// ball hits the paddle
 		if (myBouncer1.getBoundsInParent().intersects(paddle.getImage().getBoundsInParent())) {
-			if (!myBouncer1.getBoundsInParent().intersects(paddle.getImage().getBoundsInParent())) {
-				paddle.setCatchby(false);
-				rememberVelocity = new Point2D(myVelocity1.getX(), myVelocity1.getY());
-			}
+
 			if (score < 200 || score >= 300) {
 				myVelocity1 = new Point2D(myVelocity1.getX(), -myVelocity1.getY());
 			}
@@ -178,7 +179,6 @@ public class Level {
 			}
 
 		}
-
 
 		// ball hits the bricks
 
@@ -352,64 +352,74 @@ public class Level {
 				paddle.setXord(paddle.getXord() - KEY_INPUT_SPEED);
 			}
 		}
-         
-		//paddle extra function: when score between 200-300, paddle can catch the ball and 
-		//release it only after R is pressed
-		if (score >= 200 && score < 300
-				&& myBouncer1.getBoundsInParent().intersects(paddle.getImage().getBoundsInParent())
-				&& gameStart == true) {
-			if (code == KeyCode.R) {
-				myVelocity1 = new Point2D(rememberVelocity.getX(), -rememberVelocity.getY());
-                 System.out.println(rememberVelocity);
-				paddle.setCatchby(true);
-			}
-			if (code == KeyCode.RIGHT && 
-				paddle.getXord() <= myScene.getWidth() - paddle.getImage().getBoundsInLocal().getWidth()) {
-				paddle.setXord(paddle.getXord() + KEY_INPUT_SPEED);
-				myBouncer1.setX(myBouncer1.getX() + KEY_INPUT_SPEED);
-				System.out.println("right");
-			}
-			if (code == KeyCode.LEFT && paddle.getXord() >= 0) {
-				paddle.setXord(paddle.getXord() - KEY_INPUT_SPEED);
-				myBouncer1.setX(myBouncer1.getX() - KEY_INPUT_SPEED);
-				System.out.println("left");
-			}
-		}
-		
-		//paddle extra function: speeding up in one direction
-		
-		if (score>=100 && score<200 && gameStart==true) {
-			if (code == KeyCode.LEFT && paddle.getXord() >= 0) {
-				if (previousCode=="left") {
-					leftVelocity+=2;
-					paddle.setXord(paddle.getXord() - leftVelocity);
-					
-				}
-				else {
-					leftVelocity=KEY_INPUT_SPEED;
-					paddle.setXord(paddle.getXord() - leftVelocity);
-					previousCode="left";
-				}
-			}
-			
-			
-			if (code == KeyCode.RIGHT && 
-				paddle.getXord() <= myScene.getWidth() - paddle.getImage().getBoundsInLocal().getWidth()) {
-				if (previousCode=="right") {
-					rightVelocity+=2;
-					paddle.setXord(paddle.getXord() + rightVelocity);
-					
-				}
-				else {
-					rightVelocity=KEY_INPUT_SPEED;
-					paddle.setXord(paddle.getXord() + rightVelocity);
-					previousCode="right";
-				}
-			}
-		}
-		
 
-		else if (gameStart == true) {
+		// paddle extra function: when score between 200-300, paddle can catch the ball
+		// and
+		// release it only after R is pressed
+		if (score >= 200 && score < 300 && gameStart == true) {
+			if (myBouncer1.getBoundsInParent().intersects(paddle.getImage().getBoundsInParent())) {
+				if (code == KeyCode.R) {
+					myVelocity1 = new Point2D(rememberVelocity.getX(), -rememberVelocity.getY());
+
+					paddle.setCatchby(true);
+				}
+				if (code == KeyCode.RIGHT
+						&& paddle.getXord() <= myScene.getWidth() - paddle.getImage().getBoundsInLocal().getWidth()) {
+					paddle.setXord(paddle.getXord() + KEY_INPUT_SPEED);
+					myBouncer1.setX(myBouncer1.getX() + KEY_INPUT_SPEED);
+
+				}
+				if (code == KeyCode.LEFT && paddle.getXord() >= 0) {
+
+					paddle.setXord(paddle.getXord() - KEY_INPUT_SPEED);
+					myBouncer1.setX(myBouncer1.getX() - KEY_INPUT_SPEED);
+
+				}
+			} else {
+				if (code == KeyCode.RIGHT
+						&& paddle.getXord() <= myScene.getWidth() - paddle.getImage().getBoundsInLocal().getWidth()) {
+					paddle.setXord(paddle.getXord() + KEY_INPUT_SPEED);
+
+				}
+				if (code == KeyCode.LEFT && paddle.getXord() >= 0) {
+					paddle.setXord(paddle.getXord() - KEY_INPUT_SPEED);
+
+				}
+
+			}
+		}
+
+		// paddle extra function: speeding up in one direction
+
+		if (score >= 100 && score < 200 && gameStart == true) {
+			if (code == KeyCode.LEFT && paddle.getXord() >= 0) {
+				if (previousCode == "left") {
+					leftVelocity += 2;
+					paddle.setXord(paddle.getXord() - leftVelocity);
+
+				} else {
+					leftVelocity = KEY_INPUT_SPEED;
+					paddle.setXord(paddle.getXord() - leftVelocity);
+					previousCode = "left";
+				}
+			}
+
+			if (code == KeyCode.RIGHT
+					&& paddle.getXord() <= myScene.getWidth() - paddle.getImage().getBoundsInLocal().getWidth()) {
+				if (previousCode == "right") {
+					rightVelocity += 2;
+					paddle.setXord(paddle.getXord() + rightVelocity);
+
+				} else {
+					rightVelocity = KEY_INPUT_SPEED;
+					paddle.setXord(paddle.getXord() + rightVelocity);
+					previousCode = "right";
+				}
+			}
+		}
+
+		if (score < 100) {
+
 			if (code == KeyCode.RIGHT
 					&& paddle.getXord() <= myScene.getWidth() - paddle.getImage().getBoundsInLocal().getWidth()) {
 				paddle.setXord(paddle.getXord() + KEY_INPUT_SPEED);
@@ -492,27 +502,5 @@ public class Level {
 		scoreText.setY(10);
 		return scoreText;
 	}
-	
-	public void showPopUp(String message) {
-		Popup popup=new Popup();
-		popup.setX(-SIZE/2);
-		popup.setY(SIZE/2);
-		
-		
-		Button again=new Button("Try again");
-		again.setOnAction(e-> ButtonClicked(e));
-		popup.getContent().add(again);
-		popup.show(stage);
-		
-	}
-
-	private Object ButtonClicked(ActionEvent e) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
-
-
-	
 
 }
