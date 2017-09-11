@@ -39,8 +39,13 @@ public class Level {
 	public ArrayList<PowerUp> currentPowerUp = new ArrayList<PowerUp>();
 
 	public Brick[] bricks;
-	public int[] brickConfig = { 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 2, 2, 3, 2, 2, 2, 2, 2, 3, 2, 1, 1, 3, 3, 1, 1, 1, 1,
+	//brick configuration for level 1, 2 and 3
+	public int[] brickConfig1 = { 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 2, 2, 3, 2, 2, 2, 2, 2, 3, 2, 1, 1, 3, 3, 1, 1, 1, 1,
 			1 };
+	public int[] brickConfig2 = { 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 2, 2, 3, 2, 2, 2, 2, 2, 3, 2, 1, 1, 3, 3, 1, 1, 1, 1,
+			1 ,2,2,2,2,2,3,1,1,1,2,3,1,3,1,2};
+	public int[] brickConfig3 = { 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 2, 2, 3, 2, 2, 2, 2, 2, 3, 2, 1, 1, 3, 3, 1, 1, 1, 1,
+			1,2,1,3,1,1,1,3,3,1,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2 };
 
 	// some things we need to remember during our game
 	private Scene myScene;
@@ -73,6 +78,9 @@ public class Level {
 	private Timeline animation;
 	private static Stage stage;
 	private int levelNumber;
+	
+	
+	Button button1;
 
 	public Level(Timeline animation, Stage stage, int levelNumber) {
 		this.animation = animation;
@@ -87,9 +95,18 @@ public class Level {
 		// create a place to see the shapes
 		myScene = new Scene(root, width, height, background);
 
-		// set up bricks
-
-		bricks = setUpBricks(brickConfig);
+		// set up bricks for different levels
+        
+		if (levelNumber==1) {
+		bricks = setUpBricks(brickConfig1);}
+		
+		if (levelNumber==2) {
+			bricks = setUpBricks(brickConfig2);
+		}
+		
+		if (levelNumber==3) {
+			bricks = setUpBricks(brickConfig3);
+		}
 		for (int i = 0; i < bricks.length; i++) {
 			root.getChildren().add(bricks[i].getImage());
 		}
@@ -114,7 +131,7 @@ public class Level {
 		score = 0;
 		life = 3;
 
-		scoreText = setUpScore(score, life);
+		scoreText = setUpScore(score, life,levelNumber);
 		root.getChildren().add(scoreText);
 
 		// respond to input
@@ -145,9 +162,13 @@ public class Level {
 			if (life == 0) {
 				animation.stop();
 				pass = 0;
+				gameStart=false;
+				ExampleBounce test=new ExampleBounce();
+				test.loseScene(levelNumber);
+				
 
 			}
-			scoreText.setText("Score: " + score + "   Life: " + life);
+			updateScoreText();
 			paddle.setXord(SIZE / 2 - paddle.getImage().getFitWidth() / 2);
 			paddle.setYord(SIZE - paddleApartFromBottom);
 			myBouncer1.setX(SIZE / 2 - myBouncer1.getFitWidth() / 2);
@@ -196,7 +217,7 @@ public class Level {
 					bricks[i].getImage().setVisible(false);
 
 					score = score + 10;
-					scoreText.setText("Score: " + score + "   Life: " + life);
+					updateScoreText();
 
 				}
 
@@ -207,14 +228,14 @@ public class Level {
 					// brick is never hit
 					if (bricks[i].getOpacity() == 1.0 && bricks[i].getPreviousHit() == false) {
 						score = score + 10;
-						scoreText.setText("Score: " + score + "   Life: " + life);
+						updateScoreText();
 						bricks[i].setOpacity(0.6);
 					}
 
 					// brick is hit once
 					else if (bricks[i].getOpacity() == 0.6 && bricks[i].getPreviousHit() == false) {
 						score = score + 10;
-						scoreText.setText("Score: " + score + "   Life: " + life);
+						updateScoreText();
 						bricks[i].setOpacity(0.3);
 					}
 
@@ -222,7 +243,7 @@ public class Level {
 					else if (bricks[i].getOpacity() == 0.3 && bricks[i].getPreviousHit() == false) {
 						bricks[i].getImage().setVisible(false);
 						score = score + 30;
-						scoreText.setText("Score: " + score + "   Life: " + life);
+						updateScoreText();
 					}
 
 				}
@@ -232,7 +253,7 @@ public class Level {
 					bricks[i].getImage().setVisible(false);
 
 					score = score + 20;
-					scoreText.setText("Score: " + score + "   Life: " + life);
+					updateScoreText();
 
 					double Xord = bricks[i].getImage().getX() + 15;
 					double Yord = bricks[i].getImage().getY() + 20;
@@ -301,9 +322,16 @@ public class Level {
 		if (count == bricks.length) {
 			animation.stop();
 			pass = 1;
+			ExampleBounce test=new ExampleBounce();
+			test.winScene(levelNumber);
+			
 
 		}
 
+	}
+
+	private void updateScoreText() {
+		scoreText.setText("Score: " + score + "   Life: " + life+"   Level: "+levelNumber);
 	}
 
 	// Create a bouncer from a given image
@@ -431,6 +459,12 @@ public class Level {
 			}
 
 		}
+		
+		if (code==KeyCode.W) {
+			ExampleBounce test=new ExampleBounce();
+			test.winScene(levelNumber);
+			
+		}
 
 	}
 
@@ -492,15 +526,17 @@ public class Level {
 		return paddle;
 	}
 
-	public Text setUpScore(int score, int life) {
+	public Text setUpScore(int score, int life, int levelNumber) {
 		score = 0;
 		life = 3;
 		Text scoreText = new Text();
 		scoreText.setFont(Font.font(10));
-		scoreText.setText("Score: " + score + "   Life: " + life);
+		scoreText.setText("Score: " + score + "   Life: " + life+ "   Level: "+levelNumber);
 		scoreText.setX(10);
 		scoreText.setY(10);
 		return scoreText;
 	}
+	
+	
 
 }
