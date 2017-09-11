@@ -39,13 +39,13 @@ public class Level {
 	public ArrayList<PowerUp> currentPowerUp = new ArrayList<PowerUp>();
 
 	public Brick[] bricks;
-	//brick configuration for level 1, 2 and 3
+	// brick configuration for level 1, 2 and 3
 	public int[] brickConfig1 = { 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 2, 2, 3, 2, 2, 2, 2, 2, 3, 2, 1, 1, 3, 3, 1, 1, 1, 1,
 			1 };
-	public int[] brickConfig2 = { 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 2, 2, 3, 2, 2, 2, 2, 2, 3, 2, 1, 1, 3, 3, 1, 1, 1, 1,
-			1 ,2,2,2,2,2,3,1,1,1,2,3,1,3,1,2};
-	public int[] brickConfig3 = { 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 2, 2, 3, 2, 2, 2, 2, 2, 3, 2, 1, 1, 3, 3, 1, 1, 1, 1,
-			1,2,1,3,1,1,1,3,3,1,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2 };
+	public int[] brickConfig2 = { 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 2, 2, 3, 2, 2, 2, 2, 2, 3, 2, 1, 1, 3, 3, 1, 1, 1, 1, 1,
+			2, 2, 2, 2, 2, 3, 1, 1, 1, 2, 3, 1, 3, 1, 2 };
+	public int[] brickConfig3 = { 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 2, 2, 3, 2, 2, 2, 2, 2, 3, 2, 1, 1, 3, 3, 1, 1, 1, 1, 1,
+			2, 1, 3, 1, 1, 1, 3, 3, 1, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 };
 
 	// some things we need to remember during our game
 	private Scene myScene;
@@ -78,8 +78,7 @@ public class Level {
 	private Timeline animation;
 	private static Stage stage;
 	private int levelNumber;
-	
-	
+
 	Button button1;
 
 	public Level(Timeline animation, Stage stage, int levelNumber) {
@@ -96,15 +95,16 @@ public class Level {
 		myScene = new Scene(root, width, height, background);
 
 		// set up bricks for different levels
-        
-		if (levelNumber==1) {
-		bricks = setUpBricks(brickConfig1);}
-		
-		if (levelNumber==2) {
+
+		if (levelNumber == 1) {
+			bricks = setUpBricks(brickConfig1);
+		}
+
+		if (levelNumber == 2) {
 			bricks = setUpBricks(brickConfig2);
 		}
-		
-		if (levelNumber==3) {
+
+		if (levelNumber == 3) {
 			bricks = setUpBricks(brickConfig3);
 		}
 		for (int i = 0; i < bricks.length; i++) {
@@ -131,7 +131,7 @@ public class Level {
 		score = 0;
 		life = 3;
 
-		scoreText = setUpScore(score, life,levelNumber);
+		scoreText = setUpScore(score, life, levelNumber);
 		root.getChildren().add(scoreText);
 
 		// respond to input
@@ -162,10 +162,9 @@ public class Level {
 			if (life == 0) {
 				animation.stop();
 				pass = 0;
-				gameStart=false;
-				ExampleBounce test=new ExampleBounce();
+				gameStart = false;
+				ExampleBounce test = new ExampleBounce();
 				test.loseScene(levelNumber);
-				
 
 			}
 			updateScoreText();
@@ -322,16 +321,15 @@ public class Level {
 		if (count == bricks.length) {
 			animation.stop();
 			pass = 1;
-			ExampleBounce test=new ExampleBounce();
+			ExampleBounce test = new ExampleBounce();
 			test.winScene(levelNumber);
-			
 
 		}
 
 	}
 
 	private void updateScoreText() {
-		scoreText.setText("Score: " + score + "   Life: " + life+"   Level: "+levelNumber);
+		scoreText.setText("Score: " + score + "   Life: " + life + "   Level: " + levelNumber);
 	}
 
 	// Create a bouncer from a given image
@@ -459,11 +457,18 @@ public class Level {
 			}
 
 		}
-		
-		if (code==KeyCode.W) {
-			ExampleBounce test=new ExampleBounce();
+        
+		//cheat code: press W to clear this level
+		if (code == KeyCode.W) {
+			ExampleBounce test = new ExampleBounce();
 			test.winScene(levelNumber);
-			
+
+		}
+		
+		//cheat code: press L to have 3 lives again
+		if (code==KeyCode.L) {
+			life=3;
+			updateScoreText();
 		}
 
 	}
@@ -531,12 +536,10 @@ public class Level {
 		life = 3;
 		Text scoreText = new Text();
 		scoreText.setFont(Font.font(10));
-		scoreText.setText("Score: " + score + "   Life: " + life+ "   Level: "+levelNumber);
+		scoreText.setText("Score: " + score + "   Life: " + life + "   Level: " + levelNumber);
 		scoreText.setX(10);
 		scoreText.setY(10);
 		return scoreText;
 	}
-	
-	
 
 }
