@@ -136,57 +136,41 @@ public class Level {
 	// Note, there are more sophisticated ways to animate shapes, but these simple
 	// ways work fine to start.
 	public void step(double elapsedTime) {
-		// update attributes
-
+	
 		moveBouncer(myBouncer1, myVelocity1, elapsedTime);
+		
+		checkCollisionWithBorder(myBouncer1.getX(),myBouncer1.getY());
 
-		if (myBouncer1.getX() < 0
-				|| myBouncer1.getX() > myScene.getWidth() - myBouncer1.getBoundsInLocal().getWidth()) {
-			myVelocity1 = new Point2D(-myVelocity1.getX(), myVelocity1.getY());
-		}
-		if (myBouncer1.getY() < 0) {
-			myVelocity1 = new Point2D(myVelocity1.getX(), -myVelocity1.getY());
-		}
 
 		// ball touches the bottom
-		if (myBouncer1.getY() > myScene.getHeight() - myBouncer1.getBoundsInLocal().getHeight()) {
+		if (checkCollisionWithBottom()) {
 			life = life - 1;
 			if (life == 0) {
-				animation.stop();
-				pass = 0;
-				gameStart = false;
-				ExampleBounce test = new ExampleBounce();
-				test.loseScene(levelNumber);
+				
+				transitionToLose();
 
 			}
 			updateScoreText();
-			paddle.setXord(SIZE / 2 - paddle.getImage().getFitWidth() / 2);
-			paddle.setYord(SIZE - paddleApartFromBottom);
-			myBouncer1.setX(SIZE / 2 - myBouncer1.getFitWidth() / 2);
-			myBouncer1.setY(SIZE - paddleApartFromBottom - myBouncer1.getFitHeight());
-			gameStart = false;
-			myVelocity1 = new Point2D(0, 0);
+			resetGame();
+			
 
 		}
 
-		if (!myBouncer1.getBoundsInParent().intersects(paddle.getImage().getBoundsInParent())) {
+		if (!checkCollisionWithPaddle()) {
 			paddle.setCatchby(false);
 			rememberVelocity = new Point2D(myVelocity1.getX(), myVelocity1.getY());
 		}
 
 		// ball hits the paddle
-		if (myBouncer1.getBoundsInParent().intersects(paddle.getImage().getBoundsInParent())) {
+		if (checkCollisionWithPaddle()) {
 
-			if (score < 200 || score >= 300) {
-				myVelocity1 = new Point2D(myVelocity1.getX(), -myVelocity1.getY());
-			}
-
+		
 			// extra paddle power: hold the ball and release afterwards
 			if (score >= 200 && score < 300 && paddle.getCatchby() == false) {
 
 				myVelocity1 = new Point2D(0, 0);
 			}
-			if (score >= 200 && score < 300 && paddle.getCatchby() == true) {
+			else {
 				myVelocity1 = new Point2D(myVelocity1.getX(), -myVelocity1.getY());
 			}
 
@@ -200,15 +184,14 @@ public class Level {
 			if (bricks[i].getImage().isVisible() == false) {
 				count = count + 1;
 			}
-			if (myBouncer1.getBoundsInParent().intersects(bricks[i].getImage().getBoundsInParent())
+			if (checkCollisionWithBrick(i)
 					&& bricks[i].getImage().isVisible() == true) {
 				// hit by once and cleared, 10 points
 
 				if (bricks[i].getType() == 1) {
 					bricks[i].getImage().setVisible(false);
 
-					score = score + 10;
-					updateScoreText();
+					addedScore(10);
 
 				}
 
@@ -218,23 +201,20 @@ public class Level {
 				if (bricks[i].getType() == 2) {
 					// brick is never hit
 					if (bricks[i].getOpacity() == 1.0 && bricks[i].getPreviousHit() == false) {
-						score = score + 10;
-						updateScoreText();
+						addedScore(10);
 						bricks[i].setOpacity(0.6);
 					}
 
 					// brick is hit once
 					else if (bricks[i].getOpacity() == 0.6 && bricks[i].getPreviousHit() == false) {
-						score = score + 10;
-						updateScoreText();
+						addedScore(10);
 						bricks[i].setOpacity(0.3);
 					}
 
 					// brick is hit twice
 					else if (bricks[i].getOpacity() == 0.3 && bricks[i].getPreviousHit() == false) {
 						bricks[i].getImage().setVisible(false);
-						score = score + 30;
-						updateScoreText();
+						addedScore(30);
 					}
 
 				}
@@ -243,14 +223,8 @@ public class Level {
 				if (bricks[i].getType() == 3) {
 					bricks[i].getImage().setVisible(false);
 
-					score = score + 20;
-					updateScoreText();
-
-					double Xord = bricks[i].getImage().getX() + 15;
-					double Yord = bricks[i].getImage().getY() + 20;
-					PowerUp power = bricks[i].powerUp(Xord, Yord);
-					currentPowerUp.add(power);
-					root.getChildren().add(power.getImage());
+					addedScore(20);
+					addedPowerUp(i);
 
 				}
 
@@ -272,7 +246,7 @@ public class Level {
 			current.createMotion();
 
 			// if reach the bottom
-			if (current.getYord() > myScene.getHeight() - current.getImage().getBoundsInLocal().getHeight()) {
+			if (reachBottom(current)) {
 				root.getChildren().remove(current.getImage());
 				currentPowerUp.remove(current);
 			}
@@ -311,13 +285,79 @@ public class Level {
 
 		// all bricks clear
 		if (count == bricks.length) {
-			animation.stop();
-			pass = 1;
-			ExampleBounce test = new ExampleBounce();
-			test.winScene(levelNumber);
+			transitionToWin();
+		
 
 		}
 
+	}
+
+	private void transitionToWin() {
+		animation.stop();
+		ExampleBounce test = new ExampleBounce();
+		test.winScene(levelNumber);
+		
+	}
+
+	private void addedPowerUp(int i) {
+		double Xord = bricks[i].getImage().getX() + 15;
+		double Yord = bricks[i].getImage().getY() + 20;
+		PowerUp power = bricks[i].powerUp(Xord, Yord);
+		currentPowerUp.add(power);
+		root.getChildren().add(power.getImage());
+	}
+
+	private void addedScore(int addition) {
+		score = score + addition;
+		updateScoreText();
+	}
+
+	private boolean checkCollisionWithBrick(
+			int i) {
+		return myBouncer1.getBoundsInParent().intersects(bricks[i].getImage().getBoundsInParent());
+	}
+
+	private boolean checkCollisionWithPaddle() {
+		return myBouncer1.getBoundsInParent().intersects(paddle.getImage().getBoundsInParent());
+	}
+
+	private boolean checkCollisionWithBottom() {
+		return myBouncer1.getY() > myScene.getHeight() - myBouncer1.getBoundsInLocal().getHeight();
+	}
+
+	private void resetGame() {
+		paddle.setXord(SIZE / 2 - paddle.getImage().getFitWidth() / 2);
+		paddle.setYord(SIZE - paddleApartFromBottom);
+		myBouncer1.setX(SIZE / 2 - myBouncer1.getFitWidth() / 2);
+		myBouncer1.setY(SIZE - paddleApartFromBottom - myBouncer1.getFitHeight());
+		gameStart = false;
+		myVelocity1 = new Point2D(0, 0);
+		
+	}
+
+	private void transitionToLose() {
+	
+		animation.stop();
+		gameStart = false;
+		ExampleBounce test = new ExampleBounce();
+		test.loseScene(levelNumber);
+		
+	}
+
+	private void checkCollisionWithBorder(
+			double x, double y) {
+		if (x < 0 || x > myScene.getWidth() - myBouncer1.getBoundsInLocal().getWidth()) {
+			myVelocity1 = new Point2D(-myVelocity1.getX(), myVelocity1.getY());
+		}
+		if (y < 0) {
+			myVelocity1 = new Point2D(myVelocity1.getX(), -myVelocity1.getY());
+		}
+		
+	}
+
+	private boolean reachBottom(
+			PowerUp current) {
+		return current.getYord() > myScene.getHeight() - current.getImage().getBoundsInLocal().getHeight();
 	}
 
 	private void updateScoreText() {
@@ -375,7 +415,7 @@ public class Level {
 		// and
 		// release it only after R is pressed
 		if (score >= 200 && score < 300 && gameStart == true) {
-			if (myBouncer1.getBoundsInParent().intersects(paddle.getImage().getBoundsInParent())) {
+			if (checkCollisionWithPaddle()) {
 				if (code == KeyCode.R) {
 					myVelocity1 = new Point2D(rememberVelocity.getX(), -rememberVelocity.getY());
 
