@@ -1,8 +1,7 @@
 game
 ====
 
-First project for CompSci 308 Fall 2017
-This project is done by myself. I started this project on Sept 1, finished on Sept 10. The number of hours worked was around 20 hours. I checked oracle for some functions. The complete project function is introduced as below:
+The complete project function is introduced as below:
 
 
 •	Levels: 3 Levels are mainly differentiated by the number of blocks. The configuration of the blocks is an array such as [1,2,3,2,1,1] (1 meaning type 1 block).
